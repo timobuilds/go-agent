@@ -3,8 +3,9 @@ package main
 import (
 	"bufio"   // For reading input line by line
 	"context" // For context management and cancellation
-	"fmt"     // For formatted output
-	"os"      // For accessing stdin and environment variables
+	"encoding/json"
+	"fmt" // For formatted output
+	"os"  // For accessing stdin and environment variables
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go" // Anthropic's official Go SDK for Claude API
@@ -85,6 +86,7 @@ func NewAgent(client *anthropic.Client, getUserMessage func() (string, bool)) *A
 type Agent struct {
 	client         *anthropic.Client     // Client for making API calls to Claude
 	getUserMessage func() (string, bool) // Function to get user input
+	tools          []ToolDefinition      // List of available tools
 }
 
 func (a *Agent) Run(ctx context.Context) error {
@@ -160,4 +162,11 @@ func (a *Agent) runInference(ctx context.Context, conversation []anthropic.Messa
 		Messages:  conversation,                         // Send full conversation for context
 	})
 	return message, err
+}
+
+type ToolDefinition struct {
+	Name        string                         `json:"name"`
+	Description string                         `json:"description"`
+	InputSchema anthropic.ToolInputSchemaParam `json:"input_schema"`
+	Function    func(input json.RawMessage) (string, error)
 }
